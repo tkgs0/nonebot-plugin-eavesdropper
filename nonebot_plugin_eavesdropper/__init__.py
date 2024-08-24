@@ -162,7 +162,7 @@ async def listen_priv_processor(bot: Bot, event: PrivateMessageEvent):
     self_id = check_self_id(event.self_id)
     uid = event.user_id
     for i in namelist[self_id]:
-        if i.get('priv') and (i['priv']['all'] or uid in i['priv']['list']):
+        if namelist[self_id][i].get('priv') and (namelist[self_id][i]['priv']['all'] or uid in namelist[self_id][i]['priv']['list']):
             await send_msg(bot, event, i, handle_msg(event.get_message()))
     return
 
@@ -172,7 +172,7 @@ async def listen_group_processor(bot: Bot, event: GroupMessageEvent):
     self_id = check_self_id(event.self_id)
     gid = event.group_id
     for i in namelist[self_id]:
-        if i.get('group') and (i['group']['all'] or gid in i['group']['list']):
+        if namelist[self_id][i].get('group') and (namelist[self_id][i]['group']['all'] or gid in namelist[self_id][i]['group']['list']):
             await send_msg(bot, event, i, handle_msg(event.get_message()))
     return
 
