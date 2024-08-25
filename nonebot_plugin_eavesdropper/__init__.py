@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Literal
 import ujson as json
 from nonebot import get_driver, on_command
-from nonebot.exception import FinishedException
 from nonebot.matcher import Matcher
 from nonebot.message import event_preprocessor
 from nonebot.params import CommandArg
@@ -293,7 +292,7 @@ async def _(matcher: Matcher, arg: Message = CommandArg()):
     elif content.startswith("私聊"):
         matcher.state["FLAG"] = False
     else:
-        raise FinishedException
+        await tell.finish()
 
     matcher.stop_propagation()
 
