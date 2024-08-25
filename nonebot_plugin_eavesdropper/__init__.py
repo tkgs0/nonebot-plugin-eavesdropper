@@ -150,9 +150,9 @@ async def send_msg(bot: Bot, event: MessageEvent, master_id: str, msg = None):
         await bot.send_private_msg(
             user_id=int(master_id),
             message=(
-                f"[群聊{event.group_id}][@{event.user_id}]\n[{event.sender.card or event.sender.nickname}]:\n{msg}"
+                f"[msg_id: {event.message_id}]\n[群聊{event.group_id}][@{event.user_id}]\n[{event.sender.card or event.sender.nickname}]:\n{msg}"
                 if isinstance(event, GroupMessageEvent)
-                else f"[私聊][@{event.user_id}]\n[{event.sender.nickname}]:\n{msg}"
+                else f"[msg_id: {event.message_id}]\n[私聊][@{event.user_id}]\n[{event.sender.nickname}]:\n{msg}"
             )
         )
 
