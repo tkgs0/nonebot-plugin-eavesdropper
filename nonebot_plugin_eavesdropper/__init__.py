@@ -260,35 +260,6 @@ async def _(matcher: Matcher, event: MessageEvent, args: Message = CommandArg())
         await listen_del.finish(msg)
 
 
-tell = on_command("传话", permission=SUPERUSER, priority=2, block=False)
-
-@tell.handle()
-async def _(matcher: Matcher, bot: Bot, arg: Message = CommandArg()):
-    content = unescape(str(arg).strip())
-
-    if content.startswith("群聊"):
-        flag = True
-    elif content.startswith("私聊"):
-        flag = False
-    else:
-        return
-
-    matcher.stop_propagation()
-
-    try:
-        uid, msg = content[2:].split(maxsplit=1)
-    except ValueError:
-        await tell.finish(usage)
-
-    if not is_number(uid):
-        await tell.finish('参数错误, id必须是数字..')
-
-    if flag:
-        await bot.send_group_msg(group_id=int(uid), message=Message(msg))
-    else:
-        await bot.send_private_msg(user_id=int(uid), message=Message(msg))
-
-
 check_namelist = on_command("查看监听列表", permission=SUPERUSER, priority=2, block=True)
 
 @check_namelist.handle()
@@ -306,3 +277,50 @@ async def _(event: MessageEvent):
   全局监听: {'开' if namelist[self_id][master_id]['priv']['all'] else '关'}
   监听列表: {namelist[self_id][master_id]['priv']['list']}
 """.strip())
+
+
+
+
+tell = on_command("传话", permission=SUPERUSER, priority=2, block=False)
+
+
+@tell.handle()
+async def _(matcher: Matcher, arg: Message = CommandArg()):
+    content = unescape(str(arg).strip())
+    if content.startswith("群聊"):
+        matcher.state["FLAG"] = True
+    elif content.startswith("私聊"):
+        matcher.state["FLAG"] = False
+    else:
+        return
+
+    matcher.stop_propagation()
+
+    args = content[2:].split(maxsplit=1)
+    if not args:
+        await tell.finish(usage)
+    if not is_number(args[0]):
+        await tell.finish('参数错误, id必须是数字..')
+    matcher.state["UID"] = args[0]
+    if args[1:]:
+        matcher.state["ARG"] = args[1:]
+
+
+@tell.got("ARG", prompt="内容呢?")
+async def _(matcher: Matcher, bot: Bot):
+    await tell.finish(
+        repr(
+            (
+                await bot.send_group_msg(
+                    group_id=int(matcher.state["UID"]),
+                    message=Message(matcher.state["ARG"])
+                )
+            ) if matcher.state["FLAG"]
+            else (
+                await bot.send_private_msg(
+                    user_id=int(matcher.state["UID"]),
+                    message=Message(matcher.state["ARG"])
+                )
+            )
+        )
+    )
