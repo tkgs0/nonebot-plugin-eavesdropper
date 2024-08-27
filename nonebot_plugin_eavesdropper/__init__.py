@@ -45,7 +45,10 @@ __plugin_meta__ = PluginMetadata(
     usage=usage,
     type="application",
     homepage="https://github.com/tkgs0/nonebot-plugin-eavesdropper",
-    supported_adapters={"~onebot.v11"}
+    supported_adapters={"~onebot.v11"},
+    extra={
+        "author": "月ヶ瀬"
+    }
 )
 
 
