@@ -17,7 +17,7 @@ from nonebot.adapters.onebot.v11 import (
     unescape,
 )
 
-from .utils import msg_checker, MessageChecker
+from .utils import msg_checker
 
 usage: str ="""
 
@@ -143,9 +143,7 @@ def handle_msg(repo):
     try:
         return msg_checker(repo)
     except Exception:
-        if not MessageChecker(unescape(str(repo))).check_cq_code:
-            return repo
-    return
+        return
 
 
 async def send_msg(bot: Bot, event: MessageEvent, master_id: str):
@@ -155,7 +153,7 @@ async def send_msg(bot: Bot, event: MessageEvent, master_id: str):
     if master_id in superusers:
         await bot.send_private_msg(
             user_id=int(master_id),
-            message=(
+            message=Message(
                 f"[msg_id: {event.message_id}]\n[群聊{event.group_id}][@{event.user_id}]\n[{event.sender.card or event.sender.nickname}]:\n{msg}"
                 if isinstance(event, GroupMessageEvent)
                 else f"[msg_id: {event.message_id}]\n[私聊][@{event.user_id}]\n[{event.sender.nickname}]:\n{msg}"

@@ -1,64 +1,57 @@
 import re
-from nonebot.adapters.onebot.v11 import MessageSegment
+from typing import Union
+from nonebot.adapters.onebot.v11 import Message, MessageSegment, escape
 
 
-def msg_checker(message) -> str:
+def msg_checker(message: Union[Message, dict, str]) -> Message | str:
     if isinstance(message, str):
-        return message
+        return message if check_cq_code(message) else escape(message)
 
-    cache_list = list()
+    cache_list = []
     for i in message:
         _type = i.get("type")
         _data = i.get("data")
         if _type == "text":
-            cache_list.append(_data["text"])
-        elif _type == "image":
-            url = _data["url"]
-            check = MessageChecker(url).check_image_url
-            if check:
-                cache_list.append(MessageSegment.image(url))
+            if check_cq_code(_data["text"]):
+                cache_list.append(_data["text"])
             else:
-                cache_list.append(f"[该图片可能包含风险内容, 源url: {url}]")
+                cache_list.append(escape(_data["text"]))
+        elif _type == "image":
+            file, url = _data.get("file"), _data.get("url")
+            check = check_image_url(file, url)
+            if check:
+                cache_list.append(MessageSegment.image(url or file))
+            else:
+                cache_list.append(f"[图片风险, file: {file}, url: {url}]")
         elif _type == "face":
             cache_list.append(MessageSegment.face(_data["id"]))
         else:
             cache_list.append(f"[�: {_data}]")
 
-    return str().join(map(str, cache_list))
+    return "".join(map(str, cache_list))
 
 
-class MessageChecker:
-    """
-    检查所传回的信息是否存在被注入可能
-    """
-
-    tenc_gchat_url: str = "gchat.qpic.cn"
-    may_inject_keys: list = ["record", "video", "music", "xml", "json"]
-
-    def __init__(self, text: str):
-        self.text = text
-
-    @property
-    def check_cq_code(self) -> bool:
-        _type = re.findall(r"CQ:(.*?),", self.text)
-        for i in _type:
-            if i == "image":
-                result = re.findall(r"url=(.*?)]", self.text)
-                url = "" if not result else result[0]
-                if self.tenc_gchat_url not in url:
-                    return False
-                else:
-                    return True
-            if i in self.may_inject_keys:
+tenc_gchat_url: str = r"https?://[^\.\/]+\.qpic\.cn/"
+may_inject_keys: list = ["record", "video", "music", "xml", "json"]
+"""
+检查所传回的信息是否被注入
+"""
+def check_cq_code(text: str) -> bool:
+    _type = re.findall(r"CQ:(.*?),", text)
+    for i in _type:
+        if i == "image":
+            if (t := re.findall(r"file=(.*?)[,\]]", text, re.I)) and re.match(r"[A-z0-9]+://", t[0], re.I):
                 return False
-            else:
-                return True
-        else:
-            return True
-
-    @property
-    def check_image_url(self) -> bool:
-        if self.tenc_gchat_url not in self.text:
+            if (t := re.findall(r"url=(.*?)[,\]]", text, re.I)) and not re.match(tenc_gchat_url, t[0], re.I):
+                return False
+        if i in may_inject_keys:
             return False
-        else:
-            return True
+    return True
+
+
+def check_image_url(file, url) -> bool:
+    if re.match(r"[A-z0-9]+://", file, re.I):
+        return False
+    if url and not re.match(tenc_gchat_url, url, re.I):
+        return False
+    return True
