@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot-plugin-eavesdropper"
-version = "0.0.10"
+version = "0.0.11"
 description = "Eavesdropper in NoneBot2"
 authors = ["月ヶ瀬"]
 license = "MIT"
