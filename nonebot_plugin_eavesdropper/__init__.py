@@ -17,7 +17,7 @@ from nonebot.adapters.onebot.v11 import (
     unescape,
 )
 
-from .utils import recall_msg_dealer, MessageChecker
+from .utils import msg_checker, MessageChecker
 
 usage: str ="""
 
@@ -139,16 +139,19 @@ def is_number(s: str) -> bool:
     return False
 
 
-def handle_msg(repo: Message):
+def handle_msg(repo):
     try:
-        return recall_msg_dealer(repo)
+        return msg_checker(repo)
     except Exception:
-        if not MessageChecker(repr(repo)).check_cq_code:
+        if not MessageChecker(unescape(str(repo))).check_cq_code:
             return repo
     return
 
 
-async def send_msg(bot: Bot, event: MessageEvent, master_id: str, msg = None):
+async def send_msg(bot: Bot, event: MessageEvent, master_id: str):
+    content = await bot.get_msg(message_id=event.message_id)
+    msg = handle_msg(content['message'])
+
     if master_id in superusers:
         await bot.send_private_msg(
             user_id=int(master_id),
@@ -166,7 +169,7 @@ async def listen_priv_processor(bot: Bot, event: PrivateMessageEvent):
     uid = str(event.user_id)
     for i in namelist[self_id]:
         if namelist[self_id][i].get('priv') and (namelist[self_id][i]['priv']['all'] or uid in namelist[self_id][i]['priv']['list']):
-            await send_msg(bot, event, i, handle_msg(event.get_message()))
+            await send_msg(bot, event, i)
     return
 
 
@@ -176,7 +179,7 @@ async def listen_group_processor(bot: Bot, event: GroupMessageEvent):
     gid = str(event.group_id)
     for i in namelist[self_id]:
         if namelist[self_id][i].get('group') and (namelist[self_id][i]['group']['all'] or gid in namelist[self_id][i]['group']['list']):
-            await send_msg(bot, event, i, handle_msg(event.get_message()))
+            await send_msg(bot, event, i)
     return
 
 

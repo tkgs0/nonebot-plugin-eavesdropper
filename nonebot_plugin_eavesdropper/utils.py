@@ -1,8 +1,8 @@
 import re
-from nonebot.adapters.onebot.v11 import MessageSegment, Message
+from nonebot.adapters.onebot.v11 import MessageSegment
 
 
-def recall_msg_dealer(message: Message) -> str:
+def msg_checker(message) -> str:
     if isinstance(message, str):
         return message
 
